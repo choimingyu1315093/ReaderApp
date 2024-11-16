@@ -1,24 +1,47 @@
 package com.example.readerapp.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -26,19 +49,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import coil.compose.rememberImagePainter
 import com.example.readerapp.R
+import com.example.readerapp.model.MBook
+import com.example.readerapp.navigation.ReaderScreens
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ReaderLogo(modifier: Modifier = Modifier){
@@ -230,7 +267,10 @@ fun PasswordVisibility(passwordVisibility: MutableState<Boolean>) {
             passwordVisibility.value = !visible
         }
     ) {
-        Icons.Default.Close
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = "Close Icon"
+        )
     }
 }
 
@@ -259,5 +299,264 @@ fun SubmitButton(
                     .padding(5.dp)
             )
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReaderAppBar(
+    title: String,
+    icon: ImageVector? = null,
+    showProfile: Boolean = true,
+    navController: NavController,
+    onBackArrowClicked: () -> Unit = {},
+    modifier: Modifier = Modifier
+){
+    TopAppBar(
+        title = {
+            Row (
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                if(showProfile){
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Logo Icon",
+                        modifier = modifier
+                            .clickable { RoundedCornerShape(12.dp) }
+                            .scale(.9f)
+                    )
+                }
+                if(icon != null){
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = "Arrow back",
+                        tint = Color.Red.copy(alpha = .7f),
+                        modifier = modifier
+                            .clickable {
+                                onBackArrowClicked.invoke()
+                            }
+                    )
+                }
+                Spacer(modifier = modifier.width(40.dp))
+                Text(
+                    text = title,
+                    color = Color.Red.copy(alpha = .7f),
+                    style = TextStyle(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        },
+        actions = {
+            IconButton(
+                onClick = {
+                    FirebaseAuth.getInstance().signOut().run {
+                        navController.navigate(ReaderScreens.LoginScreen.name)
+                    }
+                }
+            ) {
+                if(showProfile){
+                    Row {
+                        Icon(
+                            imageVector = Icons.Filled.Logout,
+                            contentDescription = "Logout"
+                        )
+                    }
+                }else {
+                    Box {
+
+                    }
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            Color.Transparent
+        )
+    )
+}
+
+@Composable
+fun TitleSection(label: String, modifier: Modifier = Modifier){
+    Surface (
+        modifier = modifier
+            .padding(start = 5.dp, top = 1.dp)
+    ){
+        Column {
+            Text(
+                text = label,
+                fontSize = 19.sp,
+                fontStyle = FontStyle.Normal,
+                textAlign = TextAlign.Left
+            )
+        }
+    }
+}
+
+
+@Preview
+@Composable
+fun ListCard(
+    book: MBook = MBook("asdf", "Running", "Me and you", "hello world"),
+    onPressDetails: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+){
+
+    val context = LocalContext.current
+    val resources = context.resources
+    val displayMetrics = resources.displayMetrics
+    val screenWidth = displayMetrics.widthPixels / displayMetrics.density
+    val spacing = 10.dp
+    val screenHeight = displayMetrics.heightPixels / displayMetrics.density
+
+    Card (
+        shape = RoundedCornerShape(29.dp),
+        colors = CardDefaults.cardColors(Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .height(242.dp)
+            .width(202.dp)
+            .clickable {
+                onPressDetails.invoke(book.title.toString())
+            }
+    ){
+        Column (
+            modifier = Modifier
+                .width(screenWidth.dp - (spacing * 2)),
+            horizontalAlignment = Alignment.Start
+        ){
+            Row (
+                horizontalArrangement = Arrangement.Center,
+            ){
+                Image(
+                    painter = rememberImagePainter(data = "https://db.kookje.co.kr/news2000/photo/2019/0424/L20190424.99099011755i1.jpg"),
+                    contentDescription = "",
+                    modifier = modifier
+                        .height(140.dp)
+                        .width(100.dp)
+                        .padding(4.dp)
+                )
+                Spacer(modifier = modifier.width(50.dp))
+                Column (
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = modifier
+                        .padding(top = 25.dp)
+                ){
+                    Icon(
+                        imageVector = Icons.Rounded.FavoriteBorder,
+                        contentDescription = "Fav Icon",
+                        modifier = modifier
+                            .padding(bottom = 1.dp),
+                    )
+                    BookRating(score = 3.5)
+                }
+            }
+            Text(
+                text = book.title.toString(),
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                ),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = modifier
+                    .padding(4.dp)
+            )
+
+            Text(
+                text = book.authors.toString(),
+                modifier = modifier
+                    .padding(4.dp)
+            )
+        }
+        Row (
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.Bottom,
+            modifier = modifier
+                .fillMaxSize()
+        ){
+            RoundedButton(label = "Reading", radius = 70)
+        }
+    }
+}
+
+@Composable
+fun BookRating(score: Double = 4.5, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(56.dp),
+        shadowElevation = 6.dp,
+        color = Color.White,
+        modifier = modifier
+            .height(70.dp)
+            .padding(4.dp)
+    ) {
+        Column (
+            modifier = Modifier
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.StarBorder,
+                contentDescription = "Star",
+                modifier = Modifier
+                    .padding(3.dp)
+            )
+            Text(
+                text = score.toString(),
+                style = TextStyle(
+                    color = Color.Black
+                )
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun RoundedButton(
+    label: String = "Reading",
+    radius: Int = 29,
+    onPress: () -> Unit = {},
+    modifier: Modifier = Modifier
+){
+    Surface(
+        color = Color(0xFF92CBDF),
+        modifier = modifier
+            .clip(RoundedCornerShape(bottomEndPercent = radius, topStartPercent = radius))
+    ){
+        Column (
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = modifier
+                .width(90.dp)
+                .heightIn(40.dp)
+                .clickable {
+                    onPress.invoke()
+                }
+        ){
+            Text(
+                text = label,
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 15.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun FABContent(onTap: () -> Unit, modifier: Modifier = Modifier){
+    FloatingActionButton(
+        onClick = onTap,
+        shape = RoundedCornerShape(50.dp),
+        containerColor = Color(0xFF92CBDF)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Add a Book",
+            tint = Color.White
+        )
     }
 }
